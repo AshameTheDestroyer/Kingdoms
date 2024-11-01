@@ -331,7 +331,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 880091a25b97fba448d1dcfc43b8846c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _depth: 1
+  _depth: 2
   _size: {x: 64, y: 64}
   _offset: {x: 100, y: 100}
   _scale: 5
