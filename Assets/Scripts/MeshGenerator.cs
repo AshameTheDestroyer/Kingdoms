@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter))]
@@ -7,6 +8,9 @@ public class MeshGenerator : MonoBehaviour
     [SerializeField] Vector2Int _size = Vector2Int.one * 256;
     [SerializeField] private Vector2 _offset = Vector2.one * 100;
     [SerializeField] private float _scale = 20;
+
+    [SerializeField] private Color32 _landColour = Color.green;
+    [SerializeField] private Color32 _waterColour = Color.cyan;
 
     private Mesh _mesh;
     private int[] _triangles;
@@ -52,7 +56,7 @@ public class MeshGenerator : MonoBehaviour
                 float noiseX = (float)x / _size.x * _scale + _offset.x;
                 float noiseY = (float)y / _size.y * _scale + _offset.y;
 
-                float sample = Mathf.PerlinNoise(noiseX, noiseY);
+                float sample = Mathf.Round(Mathf.PerlinNoise(noiseX, noiseY));
                 _vertices[i] = new Vector3(x - _size.x / 2f, sample * _depth, y - _size.y / 2f);
             }
         }
@@ -64,6 +68,7 @@ public class MeshGenerator : MonoBehaviour
 
         _mesh.vertices = _vertices;
         _mesh.triangles = _triangles;
+        _mesh.colors32 = _vertices.Select(vertex => Color32.Lerp(_waterColour, _landColour, vertex.y)).ToArray();
 
         _mesh.RecalculateNormals();
     }
