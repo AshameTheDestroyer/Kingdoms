@@ -10,8 +10,8 @@ public class MeshGenerator : MonoBehaviour
     [SerializeField] float _depth = 12;
     [SerializeField] uint _seed = 0;
     [SerializeField] Vector2Int _size = Vector2Int.one * 256;
-    [SerializeField] float _islandSize = 8;
-    [SerializeField, Range(0f, 0.2f)] float _islandCoherence = 0.075f;
+    [SerializeField] float _islandCoherence = 8;
+    [SerializeField, Range(0f, 0.2f)] float _islandSpread = 0.075f;
     [SerializeField] private float _scale = 64;
     [SerializeField] int _noiseOctaves = 16;
     [SerializeField] float _noiseScale = 8;
@@ -97,7 +97,7 @@ public class MeshGenerator : MonoBehaviour
     {
         float x_ = Mathf.Pow((x / _scale - _size.x / 2f) / _size.x, 2);
         float y_ = Mathf.Pow((y / _scale - _size.y / 2f) / _size.y, 2);
-        return  (x_ + y_ - _islandCoherence) * _islandSize;
+        return  (x_ + y_ - _islandSpread) * _islandCoherence;
     }
 
     private void UpdateMesh()
