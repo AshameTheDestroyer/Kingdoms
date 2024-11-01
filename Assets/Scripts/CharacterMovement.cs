@@ -43,6 +43,8 @@ public class CharacterMovement : MonoBehaviour
 
     private void HandleMovement()
     {
-        _rigidbody.velocity = _input * _movementSpeed * Time.fixedDeltaTime * 10;
+        var velocity = _input * _movementSpeed * Time.fixedDeltaTime * 10;
+        velocity.y = _rigidbody.velocity.y;
+        _rigidbody.velocity = velocity;
     }
 }
