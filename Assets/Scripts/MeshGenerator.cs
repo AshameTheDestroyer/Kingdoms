@@ -1,32 +1,46 @@
+using System;
 using System.Linq;
 using UnityEngine;
+using Unity.Mathematics;
 
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent (typeof(MeshCollider))]
 public class MeshGenerator : MonoBehaviour
 {
-    [SerializeField] int _depth = 24;
+    [SerializeField] float _depth = 12;
+    [SerializeField] uint _seed = 0;
     [SerializeField] Vector2Int _size = Vector2Int.one * 256;
-    [SerializeField] private Vector2 _offset = Vector2.one * 100;
-    [SerializeField] private float _scale = 20;
+    [SerializeField] float _islandSize = 8;
+    [SerializeField, Range(0f, 0.2f)] float _islandCoherence = 0.075f;
+    [SerializeField] private float _scale = 64;
+    [SerializeField] int _noiseOctaves = 16;
+    [SerializeField] float _noiseScale = 8;
 
-    [SerializeField] private Color32 _landColour = Color.green;
-    [SerializeField] private Color32 _waterColour = Color.cyan;
+    [SerializeField] private Gradient colourGradient;
 
     private Mesh _mesh;
     private MeshCollider _meshCollider;
     private int[] _triangles;
     private Vector3[] _vertices;
 
+    [InspectorButton(nameof(Start), ButtonWidth = 200)] public bool initializeTriangles;
+    [InspectorButton(nameof(UpdateVertices), ButtonWidth = 200)] public bool updateMesh;
+    [InspectorButton(nameof(RandomizeSeed), ButtonWidth = 200)] public bool randomizeSeed;
+
     private void Start()
     {
         _meshCollider = GetComponent<MeshCollider>();
         GetComponent<MeshFilter>().mesh = _mesh = new Mesh();
 
-        InitializeTriangles();
+        if (_seed == 0) { RandomizeSeed(); }
 
+        InitializeTriangles();
         UpdateVertices();
-        UpdateMesh();
+    }
+
+    private void RandomizeSeed()
+    {
+        _seed = Unity.Mathematics.Random.CreateFromIndex((uint)DateTime.Now.Millisecond).NextUInt();
     }
 
     private void InitializeTriangles()
@@ -47,18 +61,43 @@ public class MeshGenerator : MonoBehaviour
     private void UpdateVertices()
     {
         _vertices = new Vector3[(_size.x + 1) * (_size.y + 1)];
+        Vector3 origin = new Vector3(Mathf.Sqrt(_seed), Mathf.Sqrt(_seed));
 
         for (int i = 0, x = 0; x < _size.x + 1; x++)
         {
             for (int y = 0; y < _size.y + 1; y++, i++)
             {
-                float noiseX = (float)x / _size.x * _scale + _offset.x;
-                float noiseY = (float)y / _size.y * _scale + _offset.y;
+                float noiseX = x * _scale;
+                float noiseY = y * _scale;
 
-                float sample = Mathf.Round(Mathf.PerlinNoise(noiseX, noiseY));
+                float sample = GenerateNoise(noiseX, noiseY, origin);
                 _vertices[i] = new Vector3(x - _size.x / 2f, sample * _depth, y - _size.y / 2f);
             }
         }
+
+        UpdateMesh();
+    }
+
+    private float GenerateNoise(float x, float y, Vector3 origin)
+    {
+        float sample = 0;
+
+        for (float noiseScale = _noiseScale, opacity = 1, i = 0; i < _noiseOctaves; i++, noiseScale /= 2, opacity *= 2)
+        {
+            float x_ = (x / (noiseScale * _size.x)) + origin.x;
+            float y_ = (y / (noiseScale * _size.y)) + origin.y;
+            float z = noise.cnoise(new float2(x_, y_));
+            sample += Mathf.InverseLerp(0, 1, z) / opacity;
+        }
+
+        return Mathf.Max(0, sample - FallOfMap(x, y));
+    }
+
+    private float FallOfMap(float x, float y)
+    {
+        float x_ = Mathf.Pow((x / _scale - _size.x / 2f) / _size.x, 2);
+        float y_ = Mathf.Pow((y / _scale - _size.y / 2f) / _size.y, 2);
+        return  (x_ + y_ - _islandCoherence) * _islandSize;
     }
 
     private void UpdateMesh()
@@ -67,7 +106,7 @@ public class MeshGenerator : MonoBehaviour
 
         _mesh.vertices = _vertices;
         _mesh.triangles = _triangles;
-        _mesh.colors32 = _vertices.Select(vertex => Color32.Lerp(_waterColour, _landColour, vertex.y)).ToArray();
+        _mesh.colors32 = _vertices.Select(vertex => (Color32)colourGradient.Evaluate(vertex.y / _depth)).ToArray();
 
         _mesh.RecalculateNormals();
         _meshCollider.sharedMesh = _mesh;
