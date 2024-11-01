@@ -2,6 +2,7 @@ using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter))]
+[RequireComponent (typeof(MeshCollider))]
 public class MeshGenerator : MonoBehaviour
 {
     [SerializeField] int _depth = 24;
@@ -13,19 +14,17 @@ public class MeshGenerator : MonoBehaviour
     [SerializeField] private Color32 _waterColour = Color.cyan;
 
     private Mesh _mesh;
+    private MeshCollider _meshCollider;
     private int[] _triangles;
     private Vector3[] _vertices;
 
     private void Start()
     {
-        _mesh = new Mesh();
-        GetComponent<MeshFilter>().mesh = _mesh;
+        _meshCollider = GetComponent<MeshCollider>();
+        GetComponent<MeshFilter>().mesh = _mesh = new Mesh();
 
         InitializeTriangles();
-    }
 
-    private void Update()
-    {
         UpdateVertices();
         UpdateMesh();
     }
@@ -71,5 +70,6 @@ public class MeshGenerator : MonoBehaviour
         _mesh.colors32 = _vertices.Select(vertex => Color32.Lerp(_waterColour, _landColour, vertex.y)).ToArray();
 
         _mesh.RecalculateNormals();
+        _meshCollider.sharedMesh = _mesh;
     }
 }
