@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using Unity.Mathematics;
 
-public class MeshGenerator : MonoBehaviour
+public class WorldGenerator : MonoBehaviour
 {
     [SerializeField] private float _landDepth = 12;
     [SerializeField] private float _waterDepth = 1;
