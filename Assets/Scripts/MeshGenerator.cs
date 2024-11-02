@@ -90,7 +90,7 @@ public class MeshGenerator : MonoBehaviour
             sample += Mathf.InverseLerp(0, 1, z) / opacity;
         }
 
-        return Mathf.Max(0, sample - FallOfMap(x, y));
+        return sample - FallOfMap(x, y);
     }
 
     private float FallOfMap(float x, float y)
