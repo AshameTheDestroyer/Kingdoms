@@ -7,16 +7,20 @@ using Unity.Mathematics;
 [RequireComponent (typeof(MeshCollider))]
 public class MeshGenerator : MonoBehaviour
 {
-    [SerializeField] float _depth = 12;
-    [SerializeField] uint _seed = 0;
-    [SerializeField] Vector2Int _size = Vector2Int.one * 256;
-    [SerializeField] float _islandCoherence = 8;
-    [SerializeField, Range(0f, 0.2f)] float _islandSpread = 0.075f;
+    [SerializeField] private float _depth = 12;
+    [SerializeField] private uint _seed = 0;
+    [SerializeField] private Vector2Int _size = Vector2Int.one * 256;
+    [SerializeField] private float _islandCoherence = 8;
+    [SerializeField, Range(0f, 0.2f)] private float _islandSpread = 0.075f;
     [SerializeField] private float _scale = 64;
-    [SerializeField] int _noiseOctaves = 16;
-    [SerializeField] float _noiseScale = 8;
+    [SerializeField] private int _noiseOctaves = 16;
+    [SerializeField] private float _noiseScale = 8;
 
-    [SerializeField] private Gradient colourGradient;
+    [SerializeField] private Gradient _colourGradient;
+
+    [SerializeField] private bool _isWater;
+    [SerializeField] private float _waterRise = 1;
+    [SerializeField] private float _waveSpeed = 0.5f;
 
     private Mesh _mesh;
     private MeshCollider _meshCollider;
@@ -36,6 +40,14 @@ public class MeshGenerator : MonoBehaviour
 
         InitializeTriangles();
         UpdateVertices();
+    }
+
+    private void Update()
+    {
+        if (_isWater)
+        {
+            WaveVertices();
+        }
     }
 
     private void RandomizeSeed()
@@ -106,9 +118,27 @@ public class MeshGenerator : MonoBehaviour
 
         _mesh.vertices = _vertices;
         _mesh.triangles = _triangles;
-        _mesh.colors32 = _vertices.Select(vertex => (Color32)colourGradient.Evaluate(vertex.y / _depth)).ToArray();
+        _mesh.colors32 = _vertices.Select(vertex => (Color32)_colourGradient.Evaluate(vertex.y / _depth)).ToArray();
 
         _mesh.RecalculateNormals();
         _meshCollider.sharedMesh = _mesh;
+    }
+
+    private void WaveVertices()
+    {
+        for (int i = 0, x = 0; x < _size.x + 1; x++)
+        {
+            for (int y = 0; y < _size.y + 1; y++, i++)
+            {
+                float noiseX = (float)x / _size.x * _scale + _waveSpeed * Time.time;
+                float noiseY = (float)y / _size.y * _scale + _waveSpeed * Time.time;
+
+                Vector3 vertex = _vertices[i];
+                vertex.y = (Mathf.PerlinNoise(noiseX, noiseY) * 2 - 1) * _waterRise;
+                _vertices[i] = vertex;
+            }
+        }
+
+        UpdateMesh();
     }
 }
