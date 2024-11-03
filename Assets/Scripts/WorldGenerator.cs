@@ -65,10 +65,9 @@ public class WorldGenerator : MonoBehaviour
         {
             for (int y = 0; y < _size.y + 1; y++, i++)
             {
-                float noiseX = x * _scale;
-                float noiseY = y * _scale;
-
-                float sample = GenerateNoise(noiseX, noiseY, origin);
+                float x_ = x * _scale;
+                float y_ = y * _scale;
+                float sample = GenerateNoise(x_, y_, origin);
                 vertices[i] = new Vector3(x - _size.x / 2f, sample * depth, y - _size.y / 2f);
             }
         }
@@ -115,9 +114,9 @@ public class WorldGenerator : MonoBehaviour
 
     private float FallOfMap(float x, float y)
     {
-        float x_ = Mathf.Pow((x / _scale - _size.x / 2f) / _size.x, 2);
-        float y_ = Mathf.Pow((y / _scale - _size.y / 2f) / _size.y, 2);
-        return  (x_ + y_ - _islandSpread) * _islandCoherence;
+        float xSquared = Mathf.Pow((x / _scale - _size.x / 2f) / _size.x, 2);
+        float ySquared = Mathf.Pow((y / _scale - _size.y / 2f) / _size.y, 2);
+        return  (xSquared + ySquared - _islandSpread) * _islandCoherence;
     }
 
     private Vector3[] WaveVertices(Vector3[] vertices)
@@ -126,11 +125,11 @@ public class WorldGenerator : MonoBehaviour
         {
             for (int y = 0; y < _size.y + 1; y++, i++)
             {
-                float noiseX = (float)x / _size.x * _scale + _waveSpeed * Time.time;
-                float noiseY = (float)y / _size.y * _scale + _waveSpeed * Time.time;
+                float x_ = (float)x / _size.x * _scale + _waveSpeed * Time.time;
+                float y_ = (float)y / _size.y * _scale + _waveSpeed * Time.time;
 
                 Vector3 vertex = vertices[i];
-                vertex.y = (Mathf.PerlinNoise(noiseX, noiseY) * 2 - 1) * _waterRise;
+                vertex.y = (Mathf.PerlinNoise(x_, y_) * 2 - 1) * _waterRise;
                 vertices[i] = vertex;
             }
         }
